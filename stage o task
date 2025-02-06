@@ -9,3 +9,22 @@ my_discipline = "Medical Biology and Genetics"
 my_lang = "Python"
 my_statement = f"My name is {my_name}, my slack username is {slack_username}, my email is {my_email}, my hobby is {my_hobby}."
 print(my_statement)
+
+species_classification = {
+    "Homo sapiens": {
+        "Kingdom": "Animalia",
+        "Phylum": "Chordata",
+        "Class": "Mammalia",
+        "Order": "Primates",
+        "Family": "Hominidae"
+    },
+    "Pan troglodytes": {
+        "Kingdom": "Animalia",
+        "Phylum": "Chordata",
+        "Class": "Mammalia",
+        "Order": "Primates",
+        "Family": "Hominidae"
+    }
+}
+my_statement = f"human kingdom name is {species_classification["Homo sapiens"]["Kingdom"]}"
+print(my_statement)
