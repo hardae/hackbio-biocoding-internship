@@ -1,1 +1,11 @@
-x = 2
+personal_information = ["Karimat Busari", "Karimah", "karimatbusari@gmail.com", "bingewatching", "Nigeria", "Medical Biology and Genetics", "Python" ]
+print(personal_information)
+my_name = "Karimat Busari"
+slack_username = "Karimah"
+my_email = "karimatbusari@gmail.com"
+my_hobby = "bingewatching"
+my_country = "Nigeria"
+my_discipline = "Medical Biology and Genetics"
+my_lang = "Python"
+my_statement = f"My name is {my_name}, my slack username is {slack_username}, my email is {my_email}, my hobby is {my_hobby}."
+print(my_statement)
