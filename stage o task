@@ -28,3 +28,27 @@ species_classification = {
 }
 my_statement = f"human kingdom name is {species_classification["Homo sapiens"]["Kingdom"]}"
 print(my_statement)
+
+
+serine_01 = {
+    "Person one": {
+        "Name": "Karimat Busari",
+        "Slack_username": "Karimah",
+        "Email": "karimatbusari@gmail.com",
+        "Hobby": "Binge-watching",
+        "Country": "Nigeria",
+        "Discipline": "Medical Biology and Genetics",
+        "PPL": "Python"
+    },
+    "Person two": {
+        "Name": "Yustina Mayunga",
+        "Slack_username": "Tina",
+        "Email": "mayungayustina70@gmail.com",
+        "Hobby": "Hiking",
+        "Country": "Tanzania",
+        "Discipline": "Molecular Biology and Genomics",
+        "PPL": "Python"
+    }
+}
+personal_information = f"Hello, meet our team members, The first team member information is as follows; Name: {serine_01["Person one"]["Name"]}, Slack username: {serine_01["Person one"]["Slack_username"]} Email: {serine_01["Person one"]["Email"]} Hobby: {serine_01["Person one"]["Hobby"]} Country: {serine_01["Person one"]["Country"]} Discipline: {serine_01["Person one"]["Discipline"]} PPL: {serine_01["Person one"]["PPL"]}."
+print(personal_information)
