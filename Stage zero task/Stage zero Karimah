@@ -49,6 +49,7 @@ serine01_team_members = {
     }
 }
 # The "\n" symbol creates a new line
+print("Hello everyone, meet the team members of serine_01 group in Hackbio Internship.\n")
 print("Member one:" "\n", "Name:", serine01_team_members["Member one"]["Name"], "\n", "Slack username:", serine01_team_members["Member one"]["Slack username"], "\n", "Email:", serine01_team_members["Member one"]["Email"], "\n", "Hobby:", serine01_team_members["Member one"]["Hobby"], "\n", "Country:", serine01_team_members["Member one"]["Country"], "\n", "Discipline:", serine01_team_members["Member one"]["Discipline"], "\n", "Preffered Programming Language:", serine01_team_members["Member one"]["PPL"], "\n")
 
 print("Member two:" "\n", "Name:", serine01_team_members["Member two"]["Name"], "\n", "Slack username:", serine01_team_members["Member two"]["Slack username"], "\n", "Email:", serine01_team_members["Member two"]["Email"], "\n", "Hobby:", serine01_team_members["Member two"]["Hobby"], "\n", "Country:", serine01_team_members["Member two"]["Country"], "\n", "Discipline:", serine01_team_members["Member two"]["Discipline"], "\n", "Preffered Programming Language:", serine01_team_members["Member two"]["PPL"], "\n")
