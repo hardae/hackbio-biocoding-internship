@@ -52,3 +52,52 @@ serine_01 = {
 }
 personal_information = f"Hello, meet our team members, The first team member information is as follows; Name: {serine_01["Person one"]["Name"]}, Slack username: {serine_01["Person one"]["Slack_username"]} Email: {serine_01["Person one"]["Email"]} Hobby: {serine_01["Person one"]["Hobby"]} Country: {serine_01["Person one"]["Country"]} Discipline: {serine_01["Person one"]["Discipline"]} PPL: {serine_01["Person one"]["PPL"]}."
 print(personal_information)
+
+
+serine_01 = {
+    "Person one": {
+        "Name": "Karimat Busari",
+        "Slack_username": "Karimah",
+        "Email": "karimatbusari@gmail.com",
+        "Hobby": "Binge-watching",
+        "Country": "Nigeria",
+        "Discipline": "Medical Biology and Genetics",
+        "PPL": "Python"
+    },
+    "Person two": {
+        "Name": "Yustina Mayunga",
+        "Slack_username": "Tina",
+        "Email": "mayungayustina70@gmail.com",
+        "Hobby": "Hiking",
+        "Country": "Tanzania",
+        "Discipline": "Molecular Biology and Genomics",
+        "PPL": "Python"
+    },
+    "Person three": {
+        "Name": "Essien Joshua",
+        "Slack_username": "Thunder",
+        "Email": "essienjoshua99@gmail.com",
+        "Hobby": "Reading Wuxia",
+        "Country": "Nigeria",
+        "Discipline": "Biochemistry",
+        "PPL": "Python" 
+},
+"Person four": {
+        "Name": "Nassoufi Chaimae",
+        "Slack_username": "Chaimae",
+        "Email": "chaimaenassoufi@gmail.com",
+        "Hobby": "Reading and Writing",
+        "Country": "Morocco",
+        "Discipline": "Bioengineering",
+        "PPL": "Python" 
+},
+"Person five": {
+        "Name": "Favour Fabuyi",
+        "Slack_username": "Favour",
+        "Email": "fabuyifavour@gmail.com",
+        "Hobby": "Playing Football",
+        "Country": "Nigeria",
+        "Discipline": "Biotechnology",
+        "PPL": "Python" 
+}
+}
