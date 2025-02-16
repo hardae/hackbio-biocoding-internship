@@ -118,6 +118,6 @@ Each function can be executed independently or integrated into a larger analysis
 ---
 
 ## Author
-Developed by Joshua Essien.
+Developed by Joshua Essien, Yustina, Favour, Chaimae and Karimah.
 
 ---
