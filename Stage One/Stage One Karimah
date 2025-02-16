@@ -7,7 +7,7 @@ codon_table = {
     'UUC': 'F', 'UUU': 'F', 'UUA': 'L', 'UUG': 'L',
     'UAC': 'Y', 'UAU': 'Y', 'UAA': '', 'UAG': ''
 }
-#A= Alanine, R= Arginine, H = Histidine, V =Valine, F = Phenylalanine, L = Leucine, Q = Glutamine, '' = stop codon
+#A= Alanine, R= Arginine, H = Histidine, V =Valine, F = Phenylalanine, L = Leucine, Q = Glutamine,  Y= Tyrosine, '' = stop codon
 #Function to translate an DNA sequence into a protein sequence. 
 def dna_to_protein(dna_sequence):
     #Transcribing the dna sequence
