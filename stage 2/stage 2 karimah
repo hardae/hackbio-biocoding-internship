@@ -1,1 +1,435 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+# Load datasets ensuring correct tab separation
+data_source_1 = "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/sift.tsv"
+data_source_2 = "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/foldX.tsv"
+
+df_sift = pd.read_csv(data_source_1, sep="\t", names=["Protein", "Amino_Acid", "sift_score"], skiprows=1)
+df_foldx = pd.read_csv(data_source_2, sep="\t", names=["Protein", "Amino_Acid", "foldX_score"], skiprows=1)
+
+# Creating the new column
+df_sift['specific_Protein_aa'] = df_sift['Protein'] + "_" + df_sift['Amino_Acid']
+df_foldx['specific_Protein_aa'] = df_foldx['Protein'] + "_" + df_foldx['Amino_Acid']
+# Merge df_sift and df_foldx using specific_Protein_aa as the key
+df_merged_dataset = pd.merge(df_sift, df_foldx, on="specific_Protein_aa", how="inner")
+df_deleterious_mut = df_merged_dataset[(df_merged_dataset["sift_score"] < 0.05) & (df_merged_dataset["foldX_score"] > 2)]
+dataset_freq_sift = df_deleterious_mut["Amino_Acid_x"].str[0].value_counts()
+print(dataset_freq_sift)
+dataset_freq_foldx = df_deleterious_mut["Amino_Acid_y"].str[0].value_counts()
+print(dataset_freq_foldx)
+
+# Bar Chart for both Foldx and Sift Datasets
+def plot_bar_chart(data, title):
+    sns.barplot(x=data.index, y=data.values)
+    plt.xlabel("First Character of Amino Acid")
+    plt.ylabel("Frequency")
+    plt.title(title)
+    plt.show()
+
+plot_bar_chart(dataset_freq_sift, "Frequency of First Character in Amino_Acid_x")
+plot_bar_chart(dataset_freq_foldx, "Frequency of First Character in Amino_Acid_y")
+
+# Pie Chart for both datasets
+def plot_pie_chart(data, title):
+    plt.figure(figsize=(8, 8))
+    plt.pie(data, labels=data.index, autopct='%1.1f%%')
+    plt.title(title)
+    plt.show()
+
+plot_pie_chart(dataset_freq_sift, "Pie Chart of First Amino Acid Frequencies (SIFT)")
+plot_pie_chart(dataset_freq_foldx, "Pie Chart of First Amino Acid Frequencies (FoldX)")
+
+# Description of Glycine’s Impact on Protein Structure & Function
+# Structural Role:
+# Glycine is the smallest amino acid, with a hydrogen atom as its side chain.Because of its small size, it provides flexibility in protein structures.It is often found in turns, loops, and tight regions of proteins, such as in collagen and hinge regions of enzymes.
+# Functional Role:
+# Since glycine is nonpolar, it can be found in both hydrophobic and hydrophilic environments. It plays a critical role in enzyme function by allowing necessary flexibility. Mutations that replace glycine with a bulkier amino acid may restrict movement and affect protein folding, stability, and function.
+# Why Glycine Mutations Are Harmful:
+# Loss of flexibility → Can disrupt the function of enzymes and structural proteins. The inability to maintain protein conformation → May lead to diseases like osteogenesis imperfecta (collagen disorder).
+
+# Check amino acids with more than 100 occurrences
+high_freq_sift = dataset_freq_sift[dataset_freq_sift > 100]
+high_freq_foldx = dataset_freq_foldx[dataset_freq_foldx > 100]
+print(high_freq_sift)
+print(high_freq_foldx)
+
+#  From the frequency analysis, Glycine (G), Leucine (L), Alanine (A), and Proline (P) are the most affected amino acids in both structural (FoldX) and functional (SIFT) analyses.
+# Structural Role:
+# Many of these amino acids (L, A, V, I, F, W) are hydrophobic, meaning they are typically found inside protein cores to maintain stability.
+# Glycine (G) and Proline (P) play key roles in flexibility and rigidity of protein structures.
+# Mutations in these amino acids can destabilize protein folding or cause misfolding.
+# Functional Role:
+# Some amino acids (R, D, Y, S, T) are polar or charged, often participating in enzyme activity, phosphorylation, or binding interactions.
+# Mutations in these residues could alter protein function by affecting electrostatic interactions or regulatory modifications.
+# Conclusion:
+# Amino acids that are small, hydrophobic, or polar tend to be structurally essential, while those involved in stability, flexibility, or enzymatic functions are functionally critical. Mutations in these residues could lead to protein misfolding, loss of function, or destabilization, making them key targets in protein mutation studies.
+
+
+#start coding...
+### This script analyzes bacterial growth data by processing, visualizing, and statistically comparing
+### the growth of wild-type (WT) and mutant (MUT) strains across three different strain types.
+
+## Importing libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+# Importing and reading the dataset
+Data_source = "https://raw.githubusercontent.com/HackBio-Internship/2025_project_collection/refs/heads/main/Python/Dataset/mcgc.tsv"
+df = pd.read_csv(Data_source, sep='\t')  # reading the dataset
+
+# Debug: Check if data is loaded properly
+print("Data Preview:")
+print(df.head())
+
+# Creating metadata
+metadata = pd.DataFrame({
+    "Strain": [
+        "Strain1_Rep1", "Strain1_Rep2", "Strain2_Rep1",
+        "Strain2_Rep2", "Strain3_Rep1", "Strain3_Rep2"
+    ],
+    "WT_1": ["A1", "A3", "A5", "A7", "A9", "A11"],
+    "MUT_1": ["A2", "A4", "A6", "A8", "A10", "A12"],
+    "WT_2": ["B1", "B3", "B5", "B7", "B9", "B11"],
+    "MUT_2": ["B2", "B4", "B6", "B8", "B10", "B12"],
+    "WT_3": ["C1", "C3", "C5", "C7", "C9", "C11"],
+    "MUT_3": ["C2", "C4", "C6", "C8", "C10", "C12"]
+})
+
+# Convert Data structure for analysis
+def convert_to_curve_time(df):
+    if 'time' not in df.columns:
+        raise ValueError("Input DataFrame must contain a 'time' column.")
+   
+    df_time_indexed = df.set_index('time')
+    transposed_data = df_time_indexed.transpose()
+    x_values = df['time'].values  # Extract time values
+    return transposed_data, x_values
+
+# Processing Metadata
+def process_metadata(metadata_df):
+    MD = []
+    for _, row in metadata_df.iterrows():
+        strain_rep = row['Strain']
+        strain, rep = strain_rep.split('_')
+        for exp_num in [1, 2, 3]:
+            MD.extend([
+                {'curve_id': row[f'WT_{exp_num}'], 'strain': strain, 'rep': rep, 'type': 'WT', 'experiment': exp_num},
+                {'curve_id': row[f'MUT_{exp_num}'], 'strain': strain, 'rep': rep, 'type': 'MUT', 'experiment': exp_num}
+            ])
+    return pd.DataFrame(MD)
+
+# Plot bacterial growth curves
+def plot_strain_curves(converted_data, x_values, unit_type="min"):
+    curve_metadata = process_metadata(metadata)
+    fig, axs = plt.subplots(1, 3, figsize=(22, 7))
+    fig.subplots_adjust(top=0.85, bottom=0.35, wspace=0.35)
+    fig.suptitle('Growth Curves of the Wild Type and Mutant Strains Over Time ', y=1, fontsize=16)
+   
+    type_colors = {'WT': 'Cyan', 'MUT': 'Pink'}
+    rep_styles = {'Rep1': ':', 'Rep2': '-'}
+   
+    for idx, strain in enumerate(sorted(curve_metadata['strain'].unique())):
+        ax = axs[idx]
+        ax.set_title(f"{strain}", fontsize=14, pad=15)
+        ax.set_xlabel(f"Time ({unit_type})", fontsize=12)
+        ax.set_ylabel("OD600 (log scale)", fontsize=12)
+        ax.set_yscale('log')
+       
+        strain_data = curve_metadata[curve_metadata['strain'] == strain]
+       
+        for _, row in strain_data.iterrows():
+            if row['curve_id'] in converted_data.index:
+                ax.plot(
+                    x_values,
+                    converted_data.loc[row['curve_id']],
+                    color=type_colors[row['type']],
+                    linestyle=rep_styles[row['rep']],
+                    linewidth=1.5
+                )
+       
+        y_min = converted_data.loc[strain_data['curve_id']].min().min()
+        y_max = converted_data.loc[strain_data['curve_id']].max().max()
+        if y_min > 0 and y_max > 0:
+            ax.set_ylim(y_min * 0.5, y_max * 2)
+        else:
+            ax.set_ylim(1e-3, 1)
+       
+    plt.tight_layout()
+    plt.show()
+
+# Convert and plot data
+converted_data, x_values = convert_to_curve_time(df)
+plot_strain_curves(converted_data, x_values)
+#==============================================================================================================#
+
+# Find 80% of Maximum OD
+# This function calculates the OD value at 80% of the max OD and the corresponding time point.
+def find_80_percent_density(data, time_step=1):
+    max_density = data.max().max()
+   
+    threshold = 0.8 * max_density
+   
+    for col in data.columns:
+        if (data[col] >= threshold).any():
+            time_80_percent = int(col) * time_step  
+            density_at_80 = data[col].max()
+            return max_density, time_80_percent, density_at_80
+   
+    return max_density, None, None
+# converting the data to match the wanted structure
+converted_data, x_values =convert_to_curve_time(df)
+# ploting the growth curves
+plot_strain_curves(converted_data, x_values, unit_type='min')
+# Time to reach 80% of Carrying capacity.
+results = []
+for curve_id in converted_data.index:
+    curve_data = pd.DataFrame(converted_data.loc[curve_id]).transpose() # Get curve data and ensure proper formatting
+    curve_data.columns = curve_data.columns.astype(int) # Convert columns to integers
+    max_dens, time_80, dens_80 = find_80_percent_density(curve_data, time_step=1)   # Analyze curve
+    results.append({
+        'curve_id': curve_id,
+        'max_density': max_dens,
+        'time_to_80%': time_80,
+        'density_at_80%': dens_80
+    })
+results_df = pd.DataFrame(results)
+# Create full metadata mapping for merging it to the results
+curve_metadata = process_metadata(metadata)
+# Merge with your results
+results_df = results_df.merge(curve_metadata[['curve_id', 'strain', 'type']], on='curve_id')
+# Print results
+print("\nTime to reach 80% of Carrying Capacity (Max OD600):")
+print(results_df[['strain', 'type', 'time_to_80%', 'density_at_80%']])
+#==============================================================================================================#
+
+#Scatter Plot - Time to 80% Carrying Capacity
+plt.figure(figsize=(8, 6))
+color_map = {'WT': 'Cyan', 'MUT': 'Pink'}
+marker_map = {'Strain1': '*', 'Strain2': '+', 'Strain3': 'x'}
+
+for strain in ['Strain1', 'Strain2', 'Strain3']:
+    for t in ['WT', 'MUT']:
+        subset = results_df[(results_df['strain'] == strain) & (results_df['type'] == t)]
+        if not subset.empty:
+            plt.scatter(subset['time_to_80%'], subset['density_at_80%'],
+                        c=color_map[t], marker=marker_map[strain], s=150, edgecolor='w', alpha=0.9, label=f'{strain} {t}')
+
+plt.title('Time to 80% Carrying Capacity by Strain and Type')
+plt.xlabel('Time (minutes)')
+plt.ylabel('Density at 80%')
+plt.grid(alpha=0.2)
+plt.legend()
+plt.show()
+#======================≈==================================================#
+
+#Boxplot - Time to 80% OD by Strain and Type
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='strain', y='time_to_80%', hue='type', data=results_df, palette=color_map, width=0.5, linewidth=1.4)
+
+plt.title('Time to Reach Carrying Capacity by Strain and Mutation Type', pad=20)
+plt.xlabel('Strain', labelpad=15)
+plt.ylabel('Time (minutes)', labelpad=15)
+plt.legend(title='Mutation Type', frameon=False)
+sns.despine()
+plt.show()
+#========================================================================#
+
+#Statistical Analysis
+wt_times = results_df[results_df['type'] == 'WT']['time_to_80%']
+mut_times = results_df[results_df['type'] == 'MUT']['time_to_80%']
+
+#Preffered test : t-test
+test_stat, p_value = stats.ttest_ind(wt_times, mut_times)
+print(f"T statistic: {test_stat:.2f}\nP-value: {p_value:.3f}")
+
+#Interpretation
+# Interpretation
+alpha = 0.05
+if p_value < alpha:
+    print("There is a significant difference between WT and MUT carrying capacity times.")
+else:
+    print("There is NO significant difference between WT and MUT carrying capacity times.")
+#Output: T statistic: 0.28  , P-value: 0.782
+#Based on the statistical results, we can conclude that there is no significant difference between mutants and wild-type strain in terms of OD recorded because the P-value is greater than 0.05. Manipulations done in the mutants didn't affect the growth.
+
+
+#Task Code 2.6: Transcriptomics
+#2.6.1 Volcano Plot
+import pandas as pd
+resources = "https://gist.githubusercontent.com/stephenturner/806e31fce55a8b7175af/raw/1a507c4c3f9f1baaa3a69187223ff3d3050628d4/results.txt"
+df = pd.read_csv(resources, sep = ' ')
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+df['-log10(pvalue)'] = -np.log10(df['pvalue'])
+
+#To determine upregulated and downregulated genes
+
+upregulated = (df['log2FoldChange'] > 1) & (df['pvalue'] < 0.01)
+downregulated = (df['log2FoldChange'] < -1) & (df['pvalue'] < 0.01)
+
+#Plot
+plt.figure(figsize=(10, 6))
+
+#Plot non-significant genes(gray)
+plt.scatter(df['log2FoldChange'], df['-log10(pvalue)'], color = "gray", alpha = 0.5, label = "Non-significant")
+
+#To plot upregulated genes(red)
+plt.scatter(df[upregulated]['log2FoldChange'], df[upregulated]['-log10(pvalue)'], color = "red", label = "Upregulated")
+
+#To plot downregulated genes(blue)
+plt.scatter(df[downregulated]['log2FoldChange'], df[downregulated]['-log10(pvalue)'], color = "blue", label = "downregulated")
+
+#Threshold lines
+plt.axhline(-np.log10(0.01), linestyle = '--', color = 'black', linewidth = 0.8)  # p-value threshold
+plt.axvline(1, linestyle='--', color='red', linewidth=0.8)  # Log2FoldChange threshold
+plt.axvline(-1, linestyle='--', color='blue', linewidth=0.8)  # Log2FoldChange threshold
+
+# Labels and title
+plt.xlabel("Log2FC")
+plt.ylabel("-log10(p-value)")
+plt.title("Volcano Plot of RNA-seq Data")
+plt.legend()
+plt.show()
+
+#2.6.2 Upregulated genes
+upregulated_genes = df[upregulated]
+print(f"The upregulated genes are as follows:\n{upregulated_genes}\n")
+
+#2.6.3 Downregulated genes
+downregulated_genes = df[downregulated]
+print(f"The downregulated genes are as follows:\n{downregulated_genes}\n")
+
+# Display top results
+print("Top 5 Upregulated Genes:")
+print(upregulated_genes[['Gene', 'log2FoldChange', 'pvalue']].head())
+
+print("\nTop 5 Downregulated Genes:")
+print(downregulated_genes[['Gene', 'log2FoldChange', 'pvalue']].head())
+
+
+# 2.6.4.1 Functions of Top 5 Upregulated Genes
+# Open GeneCards links for top 5 upregulated genes
+import webbrowser
+for gene in upregulated_genes['Gene'].head():
+    url = f"https://www.genecards.org/cgi-bin/carddisp.pl?gene={gene}"
+    webbrowser.open(url)
+
+print("""
+The functions of the top 5 upregulated genes are as follows:\n EMILIN2: Likely anchors smooth muscle cells to elastic fibers and contributes to elastic fiber formation. Also involved in vessel assembly regulation. Exhibits cell adhesive properties.\n 
+POU3F4: A probable transcription factor active during early neural development and in specific neurons of the mature brain. Plays a role in pituitary and inner ear development.\n
+LOC285954: No information available on GeneCards.\n
+VEPH1: Interacts with TGF-beta receptor 1 to inhibit SMAD2 dissociation, impairing TGF-beta signaling. May also influence FOXO, Hippo, and Wnt pathways.\n
+DTHD1: Encodes a protein with a death domain, involved in apoptosis and cellular signaling complex formation.\n
+""")
+
+# 2.6.4.2 Functions of Top 5 Downregulated Genes
+# Open GeneCards links for top 5 downregulated genes
+for gene in downregulated_genes['Gene'].head():
+    url = f"https://www.genecards.org/cgi-bin/carddisp.pl?gene={gene}"
+    webbrowser.open(url)
+
+print("""
+The functions of the top 5 downregulated genes are as follows:\n TBX5: A transcription regulator crucial for heart and limb development, binding to the NPPA promoter.\n
+IFITM1: An interferon-induced antiviral protein preventing viral entry into host cells. Active against multiple viruses, including SARS-CoV-2 and HIV-1. Also involved in cell adhesion, growth regulation, and osteoblast differentiation.\n
+LAMA2: A laminin protein facilitating cell attachment, migration, and tissue organization. Essential for embryonic development and extracellular matrix interactions.\n
+CAV2: A caveolar protein interacting with G-proteins and regulating MAPK signaling. Involved in mitosis modulation, lipid metabolism, and apoptosis.\n
+TNN (Tenascin-N): An extracellular matrix protein involved in neurite outgrowth, cell migration, and angiogenesis. Also plays a role in tumorigenesis, particularly in breast cancer.
+""")
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create the dataset
+data = {
+    "Metabolite": [
+        "acetylcarnitine", "aconitic_acid", "adenine", "adenosine_cyclic_monophosphate", "adenosine_monophosphate",
+        "adenosine_triphosphate", "adipic_acid", "allantoin", "alpha_ketoglutaric_acid", "aminoadipic_acid",
+        "arabitol", "arginine", "argininosuccinic_acid", "asparagine", "aspartic_acid", "butyrylcarnitine",
+        "carnitine", "citramalic_acid", "citric_acid_isocitric_acid", "citrulline", "creatine", "creatine_phosphate",
+        "creatinine", "cystathionine", "cystine", "cytidine_triphosphate", "deoxy_methylthio_adenosine",
+        "deoxyadenosine_triphosphate", "deoxycytidine_monophosphate", "deoxythymidine_triphosphate", "deoxyuridine",
+        "dihydroxyacetone_phosphate", "dihydroxyisovalerate", "flavin_adenine_dinucleotide", "folic_acid",
+        "fructose_1_6_biphosphate", "gamma_glu_cys", "glutamic_acid", "glutamine", "gluthathione_oxidized",
+        "glyceric_acid", "glycine", "guanosine", "guanosine_triphosphate", "hexose", "hexose_1_phosphate",
+        "hexose_6_phosphate", "histidine", "homocitrate", "homoserine", "hydroxy_glutamic_acid", "hydroxyglutaric_acid",
+        "hypoxanthine", "inosine_monophosphate", "inosine_triphosphate", "isoleucine", "itaconic_acid", "ketobutyrate",
+        "ketovaleric_acid", "lactic_acid", "leucine", "maleic_acid", "malic_acid", "methionine", "myristoylcarnitine",
+        "n_acetylglutamic_acid", "n_acetylneuraminic_acid", "n_carbamoyl_aspartic_acid", "n_carbamyl_glutamic_acid",
+        "nicotinamide_adenine_dinucleotide", "o_phosphorylethanolamine", "orotic_acid", "oxamic_acid", "pantothenic_acid",
+        "pentahydroxyhexanoic_acid", "pentose", "phenolred", "phenylalanine", "phenylpyruvic_acid", "phospho_serine",
+        "phosphoenolpyruvic_acid", "pyridoxal_5_phosphate", "pyridoxal_hydrochloride", "pyridoxic_acid", "pyridoxine",
+        "pyruvic_acid", "riboflavin", "ribose_5_phosphate", "salicylic_acid", "serine", "succinic_acid", "taurine",
+        "taurocholic_acid", "thiamine", "threonine", "tryptophan", "tyrosine", "uracil", "uric_acid", "uridine",
+        "uridine_diphosphohexose", "uridine_monophosphate", "uridine_triphosphate", "valine", "xanthine", "xanthosine",
+        "xylitol", "xylulose_5_phosphate"
+    ],
+    "WT_DMSO_1": [7, -19.44763901, -0.066412547, -1.917890056, 2.967938969, 12.72884233, 1.165878343, 7.15182243, 3.897284416, 6.566451308, 3.130300677, 10.78788322, 4.529372936, 8.035990108, 12.48780933, 6.450711344, 8.292781335, 2.169572829, 2.775293891, 4.40638839, 12.14212667, 10.9923372, 6.50271102, 9.803747897, 8.805362844, 7.723140751, 0.404038076, 6.573614568, 2.310092091, 6.156367823, 0.066342663, 9.437772289, -0.713531531, 4.766782393, 2.320099265, 7.962358966, 7.788643546, 14.89545443, 15.07049174, 8.246361097, 2.230973374, 13.26447567, 0.5, 8.84362509, 15.51407273, 4.69361598, 8.027299339, 10.07357022, -0.982020371, 6.586799463, 2.474427411, 2.889464911, 5.410297076, 3.276224457, 7.366707808, 11.89033973, 8.858149592, 7.759829632, 8.054340617, 12.7642196, 11.65589608, 14.17273754, 6.789769215, 10.2231342, 5.293257655, 1.624637221, 4.84568322, 3.861186958, -1.441451999, 9.129678488, 6.627829959, -1.3, 0.173257868, 8.593991528, 6.685575078, 14.15627146, 6.665274537, 11.27521346, -2.049134593, 13.43884153, 4.275367495, 2.860044228, 0.667072484, -1.156049774, 5.580222077, 7.178996987, 1.651305172, 6.171646829, 2.935758563, 12.24448764, 6.684445766, 12.75327844, 0.258987743, 10.15638237, 12.98369016, 8.636990755, 11.17042296, 3.097706844, 2.57535632, 3.013875253, 9.541006915, 4.607715907, 9.069960973, 12.14046943, 3.880476129, -0.917890032, 5.148667208, 7.900344807],
+    "WT_pesticide_24h_1": [7.900711154, -19.44201458, 0.19558047, -2.173653327, 3.278473476, 12.79676716, 0.575284895, 7.125809097, 4.161240644, 6.336561374, 2.479788896, 9.894826395, 3.988458204, 7.249812779, 12.23886873, 7.814479026, 8.161612936, 1.226277266, 2.124027207, 3, 12.29125752, 11.05323545, 6.86830995, 8.477049396, 5.902271427, 7.818655614, 0.256334501, 6.866636378, 2.140237434, 6.440852023, -0.0767918, 9.922036702, -1.820016376, 4.870740777, 1.733237254, 8.309210622, 7.457725842, 14.64899563, 14.23228954, 8.539733172, 1.470202848, 12.6212927, -0.699722149, 8.973586921, 15.04589703, 4.947592355, 7.948815191, 9.618526889, -0.758615838, 6.108405433, 2.346419628, 2.539064706, 5.194610588, 3.291232706, 7.388589081, 11.86179492, 8.696582926, 7.921670415, 8.288223956, 12.0642288, 10.89618798, 13.05097646, 6.916312006, 9.642908144, 6.590112311, 1.780542969, 4.860381359, 3.696711377, -1.884146713, 9.286091327, 7.243378693, -1.699722143, -0.003728338, 8.406081617, 6.886141749, 13.7355379, 6.196549694, 10.74799134, -2, 14.32050604, 4.79980487, 2.969304611, 0.342922186, -2.256115486, 5.070578335, 7.108147924, 0.923208198, 5.383916725, 2.717117588, 11.6933733, 5.873470569, 12.84010065, 0.115853278, 9.681647749, 12.41239476, 7.663536547, 10.73305983, 2.447584545, 1.923208197, 1.300277847, 9.340211302, 4.781189192, 8.996236871, 11.54620484, 3.424605981, -1.058176118, 5.526786375, 7.836253012],
+    "mutant_DMSO_1": [6.49898734, -19.44282046, 0.761424368, -3.291686957, 5.19775963, 12.56360493, 0.219274952, 6.917888241, 4.353611195, 6.238329134, 1.72623494, 10.16724505, 4.110045881, 8.115102651, 11.74682055, 7.166309438, 7.519446854, 1.57126028, 2.177547825, 3.631937643, 11.98436108, 10.93492843, 6.746134497, 9.849925274, 6.953152532, 7.692660279, 0.50532601, 5.651413879, 2.397612192, 5.906021189, 0.829328433, 9.969379531, -2.221297635, 4.627176269, 1.31119744, 8.673953039, 7.135311528, 14.77150006, 14.59675604, 9.557307551, 1.730680845, 12.78820818, 0.681005686, 8.696926717, 15.0883039, 4.957663555, 8.161171996, 9.586172287, -1.059026209, 6.355591559, 2.299274273, 2.389199952, 4.989547616, 3.154569261, 7.2327568, 11.80810463, 7.835082024, 7.666648239, 6.956359182, 12.33267157, 11.42875504, 14.5761148, 6.497031364, 9.879223913, 5.539620275, 2.685592955, 4.928933199, 4.027533534, -2.526152215, 9.238670595, 6.773459856, -1.659418749, 3.546256273, 8.322930864, 6.874601669, 13.74827625, 6.169383145, 10.90429264, -1.806260137, 14.27734532, 4.03653915, 3.534861519, 0.515667954, -2.221297635, 5.213727641, 7.456505881, 0.72623494, 5.360799526, 3.317122274, 11.95482726, 5.890707385, 12.42133969, -0.090053106, 9.816020514, 12.7340582, 8.099610331, 10.98162785, 2.463200534, 1.997409734, 2.141272439, 9.261630331, 6.447418538, 8.854404336, 11.77530615, 3.461864086, -1.121761965, 5.464535744, 7.695150568],
+    "mutant_pesticide_24h_1": [5.935604875, -19.44356959, 0.227218025, -1.683514639, 4.834390917, 12.83297581, 0.479984096, 6.608346733, 4.170481011, 6.404160351, 3.244381818, 9.650624543, 4.177448162, 8.283826918, 11.91788011, 7.796669688, 8.318625277, 1.911033913, 1.733325106, 0.272542016, 12.50536161, 11.40048982, 6.717023293, 9.507569261, 5, 7.958103642, 0.427516676, 3, 2.386874692, 6.512029823, 0.16448227, 10.36842838, -0.803808871, 4.893007502, 1, 8.860754354, 7.32737707, 14.74972, 14.46647455, 9.802395155, 0.822376293, 12.96993507, 0.386874691, 9.051973694, 14.93660665, 5.336631937, 8.470240043, 9.46376662, -0.654945485, 6, 2.476760195, 2.741407452, 5.247222701, 3.343285423, 7.43366091, 11.10456743, 8.778660411, 7.909988536, 7.39948593, 12.47118008, 11.08993781, 12.67857439, 6.849114021, 9.642487822, 5.271612145, 3.522816012, 4.967249923, 3.810900974, -1.803808873, 9.553910458, 7.918033325, -1.572483326, 1.257591674, 8.368129359, 7.21227268, 13.51534167, 5.82554775, 10.80611259, -2.005442734, 14.31177642, 4.364372693, 3.794162691, 0.967249923, -3.520015914, 4.798042645, 6.701053287, 0.591492411, 5.543379177, 3.049839704, 11.83342141, 5.690133575, 12.77170726, 0.030181178, 9.878804119, 12.61556456, 7.464199086, 10.6200264, 2.341514158, 1.505519188, 1.352109273, 9.543812499, 6.172724124, 9.170855105, 11.5002758, 2.978690863, -1.005442733, 5.963511997, 7.932445983]
+}
+
+# Create DataFrame
+df = pd.DataFrame(data)
+
+# Display the first few rows
+print(df.head()) 
+# Calculate ΔM for Wild Type and Mutants
+df['ΔM_WT'] = df['WT_pesticide_24h_1'] - df['WT_DMSO_1']
+df['ΔM_Mutant'] = df['mutant_pesticide_24h_1'] - df['mutant_DMSO_1']
+
+# Display the calculated ΔM values
+print(df[['Metabolite', 'WT_DMSO_1', 'WT_pesticide_24h_1', 'ΔM_WT', 'mutant_DMSO_1', 'mutant_pesticide_24h_1', 'ΔM_Mutant']].head())
+# Scatter plot of ΔM_WT vs. ΔM_Mutant
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x='ΔM_WT', y='ΔM_Mutant', data=df)
+plt.title('Scatter Plot of ΔM for WT vs. Mutants')
+plt.xlabel('ΔM_WT (Wild Type)')
+plt.ylabel('ΔM_Mutant (Mutants)')
+plt.grid(True)
+plt.show()
+# Add a reference line (y = x)
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x='ΔM_WT', y='ΔM_Mutant', data=df)
+plt.plot([-10, 10], [-10, 10], color='red', linestyle='--', label='y = x')
+plt.title('Scatter Plot with Reference Line (y = x)')
+plt.xlabel('ΔM_WT (Wild Type)')
+plt.ylabel('ΔM_Mutant (Mutants)')
+plt.grid(True)
+plt.legend()
+plt.show()
+# Calculate residuals
+df['Residual'] = df['ΔM_Mutant'] - df['ΔM_WT']
+
+# Define residual cutoff
+residual_cutoff = 0.3  # Adjust as needed
+
+# Color points based on residual cutoff
+df['Color'] = np.where((df['Residual'] >= -residual_cutoff) & (df['Residual'] <= residual_cutoff), 'grey', 'salmon')
+
+# Scatter plot with colored points
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x='ΔM_WT', y='ΔM_Mutant', hue='Color', palette={'grey': 'grey', 'salmon': 'salmon'}, data=df)
+plt.plot([-10, 10], [-10, 10], color='red', linestyle='--', label='y = x')
+plt.title('Scatter Plot with Residual-Based Coloring')
+plt.xlabel('ΔM_WT (Wild Type)')
+plt.ylabel('ΔM_Mutant (Mutants)')
+plt.grid(True)
+plt.legend()
+plt.show()
+# Metabolites outside the residual cutoff
+outliers = df[(df['Residual'] < -residual_cutoff) | (df['Residual'] > residual_cutoff)]
+print("Metabolites outside the residual cutoff:")
+print(outliers[['Metabolite', 'ΔM_WT', 'ΔM_Mutant', 'Residual']])
 
